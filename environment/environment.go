@@ -9,11 +9,12 @@ import (
 func WithEnv(env map[string]string, body *types.Closure) {
 	var initialEnvironment = make(map[string]string)
 	var customEnvironment =  make(map[string]string)
-	fmt.Println("Printing a test line")
 	for key, value := range env {
 		initialValue := os.Getenv(key)
 		if initialValue != "" {
 			initialEnvironment[key] = initialValue
+		} else if key == "PATH"{
+			customEnvironment[key] = fmt.Sprintf("%s:%s", value, os.Getenv(key))
 		} else {
 			customEnvironment[key] = value
 		}
