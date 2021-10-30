@@ -25,7 +25,7 @@ func WithEnv(env map[string]string, body *types.Closure) {
 
 	body.Mutator(body)
 
-	defer for key, _ := range customEnvironment {
+	for key, _ := range customEnvironment {
 		err := os.Unsetenv(key)
 		if err != nil {
 			fmt.Println("Error unsetting environment")
