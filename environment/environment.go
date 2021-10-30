@@ -7,8 +7,8 @@ import (
 )
 
 func WithEnv(env map[string]string, body *types.Closure) {
-	var initialEnvironment map[string]string
-	var customEnvironment map[string]string
+	var initialEnvironment = make(map[string]string)
+	var customEnvironment =  make(map[string]string)
 	for key, value := range env {
 		initialValue := os.Getenv(key)
 		if initialValue != "" {
