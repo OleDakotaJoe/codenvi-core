@@ -4,15 +4,20 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/oledakotajoe/codenvi-core/utils"
+	"golang.org/x/crypto/ssh/terminal"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
 
 func EnviTerminal() {
+	utils.InitEnvi()
+	enviRoot, _ := os.Getwd()
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print("> ")
+		fmt.Printf("envi >%s$ ", enviRoot)
 		// Read the keyboad input.
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -20,7 +25,7 @@ func EnviTerminal() {
 		}
 
 		// Handle the execution of the input.
-		if err = execInput(input); err != nil {
+		if err = execInput(input, os.Stdout); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -29,7 +34,7 @@ func EnviTerminal() {
 // ErrNoPath is returned when 'cd' was called without a second argument.
 var ErrNoPath = errors.New("path required")
 
-func execInput(input string) error {
+func execInput(input string, writer io.Writer) error {
 	// Remove the newline character.
 	input = strings.TrimSuffix(input, "\n")
 
@@ -54,8 +59,52 @@ func execInput(input string) error {
 
 	// Set the correct output device.
 	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = writer
 
 	// Execute the command and return the error.
 	return cmd.Run()
+}
+
+func EnviTermialV2() error {
+	if !terminal.IsTerminal(0) || !terminal.IsTerminal(1) {
+		return fmt.Errorf("stdin/stdout should be terminal")
+	}
+	oldState, err := terminal.MakeRaw(0)
+	if err != nil {
+		return err
+	}
+	defer terminal.Restore(0, oldState)
+	screen := struct {
+		io.Reader
+		io.Writer
+	}{os.Stdin, os.Stdout}
+	term := terminal.NewTerminal(screen, "")
+	enviColor := string(term.Escape.Green)
+	reset := string(term.Escape.Reset)
+	wdColor := string(term.Escape.Blue)
+	wd, _ := os.Getwd()
+	homeDir, _ := utils.GetHomeDir()
+	wd = strings.Replace(wd, homeDir, "~", 1)
+	colonColor := string(term.Escape.Reset)
+
+	prompt := fmt.Sprintf("(%s)%s envi%s:%s%s%s$", "test", enviColor, colonColor, wdColor, wd, reset)
+	term.SetPrompt(prompt)
+
+	for {
+		line, err := term.ReadLine()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if line == "" {
+			continue
+		}
+		if line == "exit" {
+			return nil
+		}
+		execInput(line, term)
+		fmt.Fprint(term)
+	}
 }
