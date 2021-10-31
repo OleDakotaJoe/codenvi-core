@@ -1,10 +1,10 @@
 package terminal
 
 import (
+	"../utils"
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/oledakotajoe/codenvi-core/utils"
 	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
